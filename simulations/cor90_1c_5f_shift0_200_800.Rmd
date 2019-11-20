@@ -1,0 +1,124 @@
+---
+title: "Simulation, 1 causal, 4 correlated features to causal, cor=.90"
+author: "Ning Leng"
+date: '`r Sys.Date()`'
+output: 
+  html_document:
+    toc: true
+    number_sections: true
+    fig_width: 12
+    fig_height: 7
+    code_folding: hide
+geometry: margin=2cm
+sansfont: Calibri Light
+---
+
+# Simulate data
+```{r, include=F, echo=F}
+library(pensim)
+library(tidyverse)
+library(knitr)
+library(glmnet)
+library(pheatmap)
+source("util.R")
+set.seed(10)
+```
+
+```{r}
+nvars <- c(5,15)
+cors <- c(0.9, 0)
+nsamples <- 1000
+n.trial1 <- 200
+n.trial2 <- nsamples - n.trial1
+
+# params below are place holders to make create.data() run
+associations <- c(1, 0) 
+response <- "binary" # not used here, will generate gaissian outcomes later
+logisticintercept <- .5 # not used here, will generate gaissian outcomes later
+
+causal.v <- paste0(letters[1:length(nvars)],".1")[which(associations!=0)] # causal ones are named a.1, b.1...
+eps <- 1
+
+response.use <- "gaussian" # binomial
+
+n.sim <- 100
+
+simu.v <- sapply(1:n.sim, function(s){
+  set.seed(s)
+  simu.out <- simu(nvars=nvars, cors=cors, associations=associations, 
+                  nsamples=nsamples, response=response, logisticintercept=logisticintercept, 
+                 n.trial1=n.trial1, n.trial2=n.trial2, response.use=response.use, 
+                 eps=eps, causal.v=causal.v)}, simplify = F)
+
+#pairs(data.trial1)
+```
+
+
+`r n.sim` simulations are conducted. In each simulation, `r nvars[1]` correlated features are simulated with correlation `r cors[1]`. Other `r nvars[2]` features are simulated with correlation `r cors[2]`. Outcome follows `r response.use` distribution.
+
+Causal feature(s): `r causal.v`
+
+Two trials are simulated, with sample size `r n.trial1` and `r n.trial2`. 
+
+To take a look at an example simulated data (trial1):
+
+
+```{r}
+o.out <- order(simu.v[[1]]$data.trial1[[1]])
+data.tmp <- simu.v[[1]]$data.trial1[o.out,]
+tmp <- data.frame(outcome=data.tmp$outcome)
+rownames(tmp) <- rownames(data.tmp)
+pheatmap(t(data.tmp[,simu.v[[1]]$x.names]),
+         cluster_cols=F, cluster_rows = F,
+         annotation_row = NA,
+        annotation_col=tmp)
+
+#simu.v[[1]]$cor.mat
+```
+
+# Analysis
+
+## Effect size estimation difference between trial 1 and trial 2
+
+```{r}
+
+res.v <- sapply(1:n.sim, function(s) {
+  simu.out <- simu.v[[s]]
+  run.multi(data.trial1=simu.out$data.trial1, data.trial2=simu.out$data.trial2, x.names=simu.out$x.names,
+                 response.use = response.use, causal.v = causal.v)}, simplify = F)
+
+#res.v
+
+
+true.diff <- sapply(res.v, function(i)i$true.est.1-i$true.est.2)
+lasso.diff <- sapply(res.v, function(i)i$top.lasso.est.1-i$top.lasso.est.2)
+lasso.diff <- unlist(lasso.diff[sapply(lasso.diff, function(i)!is.na(i[1]))])
+uni.diff <- sapply(res.v, function(i)i$top.uni.est.1-i$top.uni.est.2)
+
+plot.df <- data.frame(diff=c(true.diff, uni.diff, lasso.diff), method=c(rep("true causal biomarker", length(true.diff)),
+                                                                     rep("uni variate picked", length(uni.diff)),
+                                                                     rep("lasso picked", length(lasso.diff))))
+plot.df$method <- factor(plot.df$method, levels=unique(plot.df$method))
+ggplot(plot.df, aes(x=diff, color=method)) + geom_density()
+
+
+
+```
+
+Lasso and univariate screening (linear regression) are tested.
+
+In this density plot, shown are difference between trial1 effect size estimate and trial2 effect size estimate:  
+- true causal biomarker: for the true causal feature  
+- uni variate picked: for the top 1 feature picked in trial 1 by uni variate screening  
+- lasso picked: for the top 1 feature picked in trial 1 by lasso  
+
+## Top selected features by each method
+
+```{r}
+lasso.top <- sapply(res.v, function(i)i$lasso.top.names[1])
+print(table(lasso.top))
+uni.top <- sapply(res.v, function(i)i$uni.top.names[1])
+print(table(uni.top))
+```
+
+Note true causal feature(s): `r causal.v`
