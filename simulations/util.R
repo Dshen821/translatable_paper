@@ -166,7 +166,7 @@ run.multi <- function(data.trial1, data.trial2, x.names, response.type, causal.n
   
   
   
-  out <- list(lasso.top.names = lasso.top.names, uni.top.names = uni.top.names[topn], 
+  out <- list(lasso.top.names = lasso.top.names, uni.top.names = uni.top.names[1:topn], 
               top.uni.est.1 = uni.top.val[1,1], top.uni.est.2 = uni.trial2[1, uni.top.names[1]],
               top.lasso.est.1 = uni.top.val[1,lasso.top.names[1]], top.lasso.est.2 = uni.trial2[1, lasso.top.names[1]],
               sig.lasso.est.1 = sig.lasso.est.1, sig.lasso.est.2 = sig.lasso.est.2,
