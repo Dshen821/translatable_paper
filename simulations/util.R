@@ -155,7 +155,7 @@ run.multi <- function(data.trial1, data.trial2, x.names, response.type, causal.n
   uni.pred.1 <- uni.top$pred[,uni.top.names]
   uni.pred.2 <- sapply(1:length(uni.top.names), function(i){
     tmp <- data.frame(y0 = data.trial2$outcome, x0= data.trial2[[uni.top.names[i]]]) 
-    predict(uni.top$mod[[i]], newdata = tmp)
+    predict(uni.top$mod[[uni.top.names[i]]], newdata = tmp)
     })
   colnames(uni.pred.2) <- uni.top.names
 
