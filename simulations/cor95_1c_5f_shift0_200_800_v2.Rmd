@@ -1,0 +1,180 @@
+---
+title: "Simulation, 1 causal, 4 correlated features to causal, cor=.95"
+author: "Ning Leng"
+date: '`r Sys.Date()`'
+output: 
+  html_document:
+    toc: true
+    number_sections: true
+    fig_width: 12
+    fig_height: 7
+    code_folding: hide
+geometry: margin=2cm
+sansfont: Calibri Light
+---
+
+# Simulate data
+```{r, include=F, echo=F}
+library(pensim)
+library(tidyverse)
+library(knitr)
+library(glmnet)
+library(pheatmap)
+source("util.R")
+set.seed(10)
+```
+
+
+```{r}
+param.list.0 <- list(
+  n.trial1 = 200, 
+  n.trial2 = 800,
+  n.causal = 1, coef.causal = 1,
+  n.cor.causal = 5, cor.causal = .95,
+  n.noise = 15, outcome.sd = 1,
+  shift.mean = 0, shift.sd = .1,
+  n.sim = 100)
+
+param.list <- param.list.0
+
+simu.1 <- sapply(1:param.list$n.sim, function(s){
+  set.seed(s)
+  simu.out <- simu(n.trial1 =  param.list$n.trial1, n.trial2 = param.list$n.trial2, 
+                 n.causal = param.list$n.causal, n.cor.causal = param.list$n.cor.causal, 
+                 cor.causal = param.list$cor.causal, coef.causal=param.list$coef.causal,
+                 n.noise=param.list$n.noise, outcome.sd=param.list$outcome.sd,
+                 shift.mean = param.list$shift.mean, shift.sd=param.list$shift.sd)
+  
+  }, simplify = F)
+
+heat.fun(simu.1[[1]])
+```
+
+# Analysis
+
+## Effect size estimation difference between trial 1 and trial 2
+
+```{r}
+n.sim <- 10
+n.rep <- 50
+response.type <- "gaussian"
+res.v <- sapply(1:n.sim, function(s) {
+  simu.out <- simu.1[[s]]
+  run.multi(data.trial1=simu.out$data %>% filter(trial=="trial1"), data.trial2=simu.out$data %>% filter(trial=="trial2"), x.names=simu.out$x.names,
+                 response.type = response.type, causal.names = simu.out$causal.names)}, simplify = F)
+
+#res.v
+
+
+true.diff <- sapply(res.v, function(i)i$true.est.1-i$true.est.2)
+lasso.diff <- sapply(res.v, function(i)i$top.lasso.est.1-i$top.lasso.est.2)
+lasso.diff <- unlist(lasso.diff[sapply(lasso.diff, function(i)!is.na(i[1]))])
+sig.lasso.diff <- sapply(res.v, function(i)i$sig.lasso.est.1-i$sig.lasso.est.2)
+sig.lasso.diff <- unlist(sig.lasso.diff[sapply(sig.lasso.diff, function(i)!is.na(i[1]))])
+uni.diff <- sapply(res.v, function(i)i$top.uni.est.1-i$top.uni.est.2)
+
+plot.df <- data.frame(diff=c(true.diff, uni.diff, lasso.diff, sig.lasso.diff), method=c(rep("true causal biomarker", length(true.diff)),
+                                                                     rep("uni variate picked", length(uni.diff)),
+                                                                     rep("lasso picked", length(lasso.diff)),
+                                                                     rep("lasso built signature", length(sig.lasso.diff))))
+plot.df$method <- factor(plot.df$method, levels=unique(plot.df$method))
+#ggplot(plot.df, aes(x=diff, color=method)) + geom_density()
+
+
+plot.df %>% group_by(method) %>% summarise(mean=mean(diff), median=median(diff))
+
+```
+
+
+
+Lasso and univariate screening (linear regression) are tested.
+
+shown are difference between trial1 effect size estimate and trial2 effect size estimate:  
+- true causal biomarker: for the true causal feature  
+- uni variate picked: for the top 1 feature picked in trial 1 by uni variate screening  
+- lasso picked: for the top 1 feature picked in trial 1 by lasso  
+- lasso signature: signature built by lasso using trial 1 data (this is overfitting though, a different problem)
+
+
+
+## Top selected features by each method
+
+```{r}
+lasso.top <- sapply(res.v, function(i)i$lasso.top.names[1])
+print(table(lasso.top))
+uni.top <- sapply(res.v, function(i)i$uni.top.names[1])
+print(table(uni.top))
+```
+
+## Predictive performance
+
+MSE in trial 1 vs trial 2
+
+```{r}
+
+lasso.err.trial1<- sapply(res.v, function(i)i$lasso.err.1)
+lasso.err.trial2<- sapply(res.v, function(i)i$lasso.err.2)
+uni.1.err.trial1<- sapply(res.v, function(i)i$uni.err.1[,1])
+uni.1.err.trial2<- sapply(res.v, function(i)i$uni.err.2[,1])
+
+lasso.mse.trial1 <- apply(lasso.err.trial1^2,2,mean)
+lasso.mse.trial2 <- apply(lasso.err.trial2^2,2,mean)
+uni.1.mse.trial1 <- apply(uni.1.err.trial1^2,2,mean)
+uni.1.mse.trial2 <- apply(uni.1.err.trial2^2,2,mean)
+
+mse.plot.df <- data.frame(mse=c(lasso.mse.trial1, lasso.mse.trial2, uni.1.mse.trial1, uni.1.mse.trial2), 
+                      method=rep(c("lasso.trial1", "lasso.trial2", "unitop.trial1","unitop.trial2"), each=length(lasso.mse.trial1)))
+mse.plot.df$method <- factor(mse.plot.df$method, levels=unique(mse.plot.df$method))
+#ggplot(mse.plot.df, aes(x=mse, color=method)) + geom_density()
+
+mse.plot.df %>% group_by(method) %>% summarise(mean=mean(mse), median=median(mse))
+
+lasso.mse.diff <- lasso.mse.trial2 - lasso.mse.trial1
+uni.mse.doff <- uni.1.mse.trial2 - uni.1.mse.trial1
+
+#plot.df <- data.frame(err=c( lasso.err.trial2-lasso.err.trial1, uni.1.err.trial2-uni.1.err.trial1), 
+#                      method=rep(c("lasso prediction diff",  "unitop prediction diff"), each=length(lasso.err.trial1)))
+#plot.df$method <- factor(plot.df$method, levels=unique(plot.df$method))
+#ggplot(plot.df, aes(x=err, color=method)) + geom_density()
+
+```
+
+
+
+
+
+## bootstrap correction
+
+Last two rows show bootstrap corrected MSEs in trial 2
+
+```{r}
+boot.out <-  sapply(1:n.sim, function(s) {
+  simu.out <- simu.1[[s]]
+  boot.cv(x=simu.out$data, x.names=simu.out$x.names,
+                 response.type = response.type, causal.names = simu.out$causal.names, topn = 5, n.rep = n.rep, replace = TRUE)
+    }, simplify=F)
+
+# mse diff per bootstrap
+lasso.adj.boot<- sapply(boot.out, function(j)sapply(j, function(i)mean((i$lasso.err.1)^2) - mean((i$lasso.err.2)^2)))
+uni.adj.boot <- sapply(boot.out, function(j)sapply(j, function(i)mean((i$uni.err.1[,1])^2) - mean((i$uni.err.2[,1])^2)))
+# rows: bootstraps, cols: simulations
+# average mse difference
+lasso.adj.boot.mean <- apply(lasso.adj.boot,2,mean)
+uni.adj.boot.mean <- apply(uni.adj.boot, 2, mean)
+
+lasso.mse.trial2.boot <- t(t(lasso.mse.trial2) + lasso.adj.boot.mean)
+uni.1.mse.trial2.boot <- t(t(uni.1.mse.trial2) + uni.adj.boot.mean)
+
+mse.plot.df <- rbind(mse.plot.df, data.frame(mse=c(lasso.mse.trial2.boot, uni.1.mse.trial2.boot),
+          method=rep(c( "lasso.trial2.bootcorrection", "unitop.trial2.bootcorrection"), each=length(lasso.mse.trial1))))
+  
+#ggplot(mse.plot.df, aes(x=mse, color=method)) + geom_density() + 
+
+
+mse.plot.df %>% group_by(method) %>% summarise(mean=mean(mse), median=median(mse))
+
+
+# TODO: CV
+
+
+```
