@@ -13,13 +13,20 @@ set.seed(10)
 
 simudata <- get(simuname)
 
-n.sim <- 100
-n.rep <- 50
+n.sim <- 10
+n.rep <- 20
 response.type <- "gaussian"
 res.v <- sapply(1:n.sim, function(s) {
-  simu.out <- simu.1[[s]]
-  run.multi(data.trial1=simu.out$data %>% filter(trial=="trial1"), data.trial2=simu.out$data %>% filter(trial=="trial2"), x.names=simu.out$x.names,
-            response.type = response.type, causal.names = simu.out$causal.names)}, simplify = F)
+  simu.out <- simudata[[s]]
+  x.names <- simu.out$x.names
+  causal.names <- simu.out$causal.names
+  if(!obs.subset){
+    x.names <- setdiff(simu.out$x.names, "a.0")
+    causal.names <- "a.1"
+    simu.out$data <- simu.out$data %>% select(-a.0)
+  }
+  run.multi(data.trial1=simu.out$data %>% filter(trial=="trial1"), data.trial2=simu.out$data %>% filter(trial=="trial2"), x.names=x.names,
+            response.type = response.type, causal.names = causal.names)}, simplify = F)
 
 
 true.diff <- sapply(res.v, function(i)i$true.est.1-i$true.est.2)
@@ -54,9 +61,16 @@ mse.plot.df$method <- factor(mse.plot.df$method, levels=unique(mse.plot.df$metho
 
 
 boot.out <-  sapply(1:n.sim, function(s) {
-  simu.out <- simu.1[[s]]
-  boot.cv(x=simu.out$data, x.names=simu.out$x.names,
-          response.type = response.type, causal.names = simu.out$causal.names, topn = 5, n.rep = n.rep, replace = TRUE)
+  simu.out <- simudata[[s]]
+  x.names <- simu.out$x.names
+  causal.names <- simu.out$causal.names
+  if(!obs.subset){
+    x.names <- setdiff(simu.out$x.names, "a.0")
+    causal.names <- "a.1"
+    simu.out$data <- simu.out$data %>% select(-a.0)
+  }
+  boot.cv(x=simu.out$data, x.names=x.names,
+          response.type = response.type, causal.names = causal.names, topn = 5, n.rep = n.rep, replace = TRUE)
 }, simplify=F)
 
 # mse diff per bootstrap
@@ -67,16 +81,17 @@ uni.adj.boot <- sapply(boot.out, function(j)sapply(j, function(i)mean((i$uni.err
 lasso.adj.boot.mean <- apply(lasso.adj.boot,2,mean)
 uni.adj.boot.mean <- apply(uni.adj.boot, 2, mean)
 
-lasso.mse.trial2.boot <- t(t(lasso.mse.trial2) + lasso.adj.boot.mean)
-uni.1.mse.trial2.boot <- t(t(uni.1.mse.trial2) + uni.adj.boot.mean)
+lasso.mse.trial1.boot <- t(t(lasso.mse.trial1) - lasso.adj.boot.mean)
+uni.1.mse.trial1.boot <- t(t(uni.1.mse.trial1) - uni.adj.boot.mean)
 
-mse.plot.df <- rbind(mse.plot.df, data.frame(mse=c(lasso.mse.trial2.boot, uni.1.mse.trial2.boot),
-                                             method=rep(c( "lasso.trial2.bootcorrection", "unitop.trial2.bootcorrection"), each=length(lasso.mse.trial1))))
+mse.plot.df <- rbind(mse.plot.df, data.frame(mse=c(lasso.mse.trial1.boot, uni.1.mse.trial1.boot),
+                                             method=rep(c( "lasso.trial1.bootcorrection", "unitop.trial1.bootcorrection"), each=length(lasso.mse.trial1))))
 
+mse.plot.df <- mse.plot.df %>%mutate(model = gsub("\\..*","",method))
 #ggplot(mse.plot.df, aes(x=mse, color=method)) + geom_density() + 
 
 
-saveRDS(plot.df, file = paste0(simuname,".plot.df.rds"))
-saveRDS(mse.plot.df, file = paste0(simuname,".mse.plot.df.rds"))
-saveRDS(res.v, file=paste0(simuname, ".res.v.rds"))
-saveRDS(res.v, file=paste0(simuname, ".boot.out.rds"))
+saveRDS(plot.df, file = paste0(simuname.out,".plot.df.rds"))
+saveRDS(mse.plot.df, file = paste0(simuname.out,".mse.plot.df.rds"))
+saveRDS(res.v, file=paste0(simuname.out, ".res.v.rds"))
+saveRDS(res.v, file=paste0(simuname.out, ".boot.out.rds"))

@@ -8,11 +8,13 @@ output: html_document
 ## No shift, same cor, same coef
 
 ```{r}
+source("util.R")
+library(dplyr)
 param.list.0 <- list(
   n.trial1 = 200, 
   n.trial2 = 800,
   n.causal = 1, coef.causal = 1,
-  n.cor.causal = 5, cor.causal = .95,
+  n.cor.causal = 5, cor.causal = .98,
   n.noise = 15, outcome.sd = 1,
   shift.mean = 0, shift.sd = .1,
   n.sim = 100)
@@ -38,7 +40,7 @@ simu.1 <- sapply(1:param.list$n.sim, function(s){
 
 ```{r}
 param.list <- param.list.0
-param.list$cor.causal <- c(.95, .8)
+param.list$cor.causal <- c(.98, .8)
 
 simu.2 <- sapply(1:param.list$n.sim, function(s){
   set.seed(s)
@@ -55,7 +57,7 @@ simu.2 <- sapply(1:param.list$n.sim, function(s){
 ## No shift, same cor, diff coef
 ```{r}
 param.list <- param.list.0
-param.list$coef.causal <- c(1, .8)
+param.list$coef.causal <- c(1, .6)
 
 simu.3 <- sapply(1:param.list$n.sim, function(s){
   set.seed(s)
@@ -73,7 +75,7 @@ simu.3 <- sapply(1:param.list$n.sim, function(s){
 ## With shift, same cor, same coef
 ```{r}
 param.list <- param.list.0
-param.list$shift.mean <- c(.05)
+param.list$shift.mean <- c(.5)
 
 simu.4 <- sapply(1:param.list$n.sim, function(s){
   set.seed(s)

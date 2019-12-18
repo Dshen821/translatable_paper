@@ -20,8 +20,8 @@ simu <- function(n.trial1, n.trial2,
                  shift.mean = c(0, 0), shift.sd=c(.1, .1)) {
   
   nsamples <- n.trial1 + n.trial2
-  coef.causal <- data.matrix(coef.causal)
-  cor.causal <- data.matrix(cor.causal)
+  coef.causal <- matrix(coef.causal, nrow=n.causal)
+  cor.causal <- matrix(cor.causal, nrow=n.causal)
   if(n.causal>0)stopifnot(n.causal == length(n.cor.causal)) else stopifnot(is.null(n.cor.causal))
   stopifnot(n.causal+n.noise>0)
   
@@ -44,7 +44,7 @@ simu <- function(n.trial1, n.trial2,
     for (fe in 1:n.causal){
       if(shift.mean[fe]>0){
         x.var <- paste0(letters[fe],".0")
-        x.no.cor[which(x.no.cor$trial=='trail.2'), x.var] <- x.no.cor[which(x.no.cor$trial=='trail.2'), x.var] + rnorm(n.trial2 ,shift.mean[fe], shift.sd[fe])
+        x.no.cor[which(x.no.cor$trial=='trial2'), x.var] <- x.no.cor[which(x.no.cor$trial=='trial2'), x.var] + rnorm(n.trial2 ,shift.mean[fe], shift.sd[fe])
       }
       }
   }
@@ -56,7 +56,7 @@ simu <- function(n.trial1, n.trial2,
       if(n.cor.causal[fe]>0){
         prefix <- letters[fe]
         cor.causal.use <- cor.causal[fe, ] # cor to use for each causal feature
-        cor.v <- c(rep(cor.causal.use, n.trial1), rep(cor.causal.use[length(cor.causal.use)], n.trial2)) 
+        cor.v <- c(rep(cor.causal.use[1], n.trial1), rep(cor.causal.use[length(cor.causal.use)], n.trial2)) 
         # cor for each patient (all pts have same cor structure, or each trial has diff cor structure)
         x.cor.tmp <- sapply(1:n.cor.causal[fe], function(i) x.no.cor[, paste0(prefix,".0")] * sqrt(cor.v) + rnorm(nsamples) * sqrt(1-cor.v))
         colnames(x.cor.tmp) <- paste0(prefix, ".", 1:ncol(x.cor.tmp))
@@ -98,6 +98,17 @@ heat.fun <- function(simu.out){
            annotation_row = NA,
            annotation_col=tmp)
   
+}
+
+summary.cor <- function(simu.out){
+  x.names <- simu.out$x.names[which(substr(simu.out$x.names,1,2)=="a.")]
+  xcor.trial1 <- cor(simu.out$data %>% filter(trial=="trial1") %>% select(!!x.names, outcome))
+  xcor.trial2 <- cor(simu.out$data %>% filter(trial=="trial2") %>% select(!!x.names, outcome))
+  x.shift <- simu.out$data %>% group_by(trial) %>% summarize(a0_mean=mean(a.0))
+  model.trial1 <- coef(summary(lm(outcome~a.0, data=simu.out$data %>% filter(trial=="trial1"))))
+  model.trial2 <- coef(summary(lm(outcome~a.0, data=simu.out$data %>% filter(trial=="trial2"))))
+  out <- list(xcor.trial1=xcor.trial1, xcor.trial2=xcor.trial2, x.shift=x.shift,
+              model.trial1=model.trial1, model.trial2=model.trial2)
 }
 
 
