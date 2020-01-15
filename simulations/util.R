@@ -7,19 +7,21 @@
 #' If it is a vector, assuming trial 1 and 2 share the same coefficients.
 #' If trial 1 and 2 share different coefficients, it should be a matrix with 2 columns, where column 1 (2)
 #' indicates trial 1(2)
-#' @param n.trial1,n.trial2 number of samples in trial 1 and 2
+#' @param n.trial number of samples in each trial. should be a factor. e.g. c(200, 800) means 200 samples in trial 1
+#' and 800 samples in trial2
 #' @param n.noise response type, gaussian or binomial
 #' @param outcome.sd when gaussian outcome is generated, noise follows N(0, eps)
 #' @param response not used
 #' @param logisticintercept not used
 #' TODO: replace create.data with alpha
 #' TODO: X shift between trial1 and trial2
-simu <- function(n.trial1, n.trial2, 
+simu <- function(n.trial, 
                  n.causal = 2, n.cor.causal = c(10,20), cor.causal = c(.9, .8), coef.causal=c(1,0),
                  n.noise=50, outcome.sd=.1,
                  shift.mean = c(0, 0), shift.sd=c(.1, .1)) {
   
-  nsamples <- n.trial1 + n.trial2
+  nsamples <- sum(n.trial)
+  nt <- length(n.trial)
   coef.causal <- matrix(coef.causal, nrow=n.causal)
   cor.causal <- matrix(cor.causal, nrow=n.causal)
   if(n.causal>0)stopifnot(n.causal == length(n.cor.causal)) else stopifnot(is.null(n.cor.causal))
@@ -36,7 +38,8 @@ simu <- function(n.trial1, n.trial2,
   x.no.cor <- sapply(1: (n.causal+n.noise), function(i)rnorm(nsamples))
   colnames(x.no.cor) <- names.no.cor
   x.no.cor <- as.data.frame(x.no.cor)
-  x.no.cor <- x.no.cor %>% mutate(trial=c(rep("trial1", n.trial1), rep("trial2", n.trial2)))
+  x.no.cor <- x.no.cor %>% 
+    mutate(trial = unlist(sapply(1:nt, function(i)rep(paste0("trial",i), n.trial[i]))))
   
   
   # population shift
@@ -44,19 +47,24 @@ simu <- function(n.trial1, n.trial2,
     for (fe in 1:n.causal){
       if(shift.mean[fe]>0){
         x.var <- paste0(letters[fe],".0")
-        x.no.cor[which(x.no.cor$trial=='trial2'), x.var] <- x.no.cor[which(x.no.cor$trial=='trial2'), x.var] + rnorm(n.trial2 ,shift.mean[fe], shift.sd[fe])
+        for(i in 1:nt){
+          if(i!=1)
+          x.no.cor[which(x.no.cor$trial==paste0('trial',i)), x.var] <- x.no.cor[which(x.no.cor$trial==paste0('trial',i)), x.var] + rnorm(n.trial[i] ,shift.mean[fe]*(i-1), shift.sd[fe])
+        }
       }
       }
   }
   
   # Simulate correlated features: allow different correlation matrix in trial 1 and 2
+  
   x <- x.no.cor
   if(n.causal>0){
     for (fe in 1:n.causal){
       if(n.cor.causal[fe]>0){
         prefix <- letters[fe]
         cor.causal.use <- cor.causal[fe, ] # cor to use for each causal feature
-        cor.v <- c(rep(cor.causal.use[1], n.trial1), rep(cor.causal.use[length(cor.causal.use)], n.trial2)) 
+        if(ncol(cor.causal)!=1)cor.v <- unlist(sapply(1:nt, function(i)rep(cor.causal.use[i], n.trial[i])))
+        else cor.v <- rep(cor.causal.use, sum(n.trial))
         # cor for each patient (all pts have same cor structure, or each trial has diff cor structure)
         x.cor.tmp <- sapply(1:n.cor.causal[fe], function(i) x.no.cor[, paste0(prefix,".0")] * sqrt(cor.v) + rnorm(nsamples) * sqrt(1-cor.v))
         colnames(x.cor.tmp) <- paste0(prefix, ".", 1:ncol(x.cor.tmp))
@@ -73,7 +81,7 @@ simu <- function(n.trial1, n.trial2,
   
   if(n.causal>0){ 
     x$outcome <- NULL
-    for(i in 1:2){
+    for(i in 1:nt){
     coef.use <- coef.causal[,ifelse(ncol(coef.causal)==1, 1, i)]
     tmp <-which(x$trial==paste0("trial",i))
     x$outcome[tmp] <- colSums(t(x[tmp, causal.names]) * coef.use) + 
@@ -102,13 +110,13 @@ heat.fun <- function(simu.out){
 
 summary.cor <- function(simu.out){
   x.names <- simu.out$x.names[which(substr(simu.out$x.names,1,2)=="a.")]
-  xcor.trial1 <- cor(simu.out$data %>% filter(trial=="trial1") %>% select(!!x.names, outcome))
-  xcor.trial2 <- cor(simu.out$data %>% filter(trial=="trial2") %>% select(!!x.names, outcome))
+  xcor.list <- sapply(unique(data$trial), function(i)
+    cor(simu.out$data %>% filter(trial==i) %>% select(!!x.names, outcome)))
   x.shift <- simu.out$data %>% group_by(trial) %>% summarize(a0_mean=mean(a.0))
-  model.trial1 <- coef(summary(lm(outcome~a.0, data=simu.out$data %>% filter(trial=="trial1"))))
-  model.trial2 <- coef(summary(lm(outcome~a.0, data=simu.out$data %>% filter(trial=="trial2"))))
-  out <- list(xcor.trial1=xcor.trial1, xcor.trial2=xcor.trial2, x.shift=x.shift,
-              model.trial1=model.trial1, model.trial2=model.trial2)
+  model.list <- sapply(unique(data$trial), function(i) 
+    coef(summary(lm(outcome~a.0, data=simu.out$data %>% filter(trial==i)))))
+  out <- list(xcor.list=xcor.list, x.shift=x.shift,
+              model.list=model.list)
 }
 
 
@@ -193,15 +201,22 @@ run.multi <- function(data.trial1, data.trial2, x.names, response.type, causal.n
   
 }
 
-#' bootstrap or two fold CV
+#' bootstrap or two fold CV or pre-defined CV
+#' @param name.mat pre difined training Index for CV. Each column represents one repeat. 
+#' Rows are index of data entries to in included in training set. name.mat should be a list.
+#' if name.mat is not NULL, n.rep and replace will be ignored
 
-boot.cv <-  function(x, x.names, response.type, causal.names, topn = 5, n.rep = 100, replace = TRUE){
-  name.mat <- data.matrix(sapply(1:n.rep, function(i)sample(1:nrow(x), nrow(x), replace = replace)))
-  if(!replace) name.mat <- name.mat[1:round(nrow(x)/2),,drop=F] # if cv, only take the first half of patients
-  cv.res <- sapply(1:n.rep, function(i){
-    data.trial1 <- x[name.mat[,i],]
-    data.trial2 <- x[setdiff(1:nrow(x), name.mat[,i]),]
-    res <-  run.multi(data.trial1=data.trial1, data.trial2=data.trial2, x.names=x.names, 
+boot.cv <-  function(x, x.names, response.type, causal.names, topn = 5, n.rep = 100, replace = TRUE, name.mat = NULL){
+  if(is.null(name.mat)){
+    n.tmp <- ifelse(replace, nrow(x), round(nrow(x)/2)) # bootstrap vs CV
+    name.mat <- sapply(1:n.rep, function(i)sample(1:nrow(x), nrow(x), replace = replace)[1:n.tmp], simplify=F)
+    # if cv, only take the first half of patients as training
+  }
+    cv.res <- sapply(1:length(name.mat), function(i){
+      index <- name.mat[[i]]
+      data.trial1 <- x[index,]
+      data.trial2 <- x[setdiff(1:nrow(x), index),]
+      res <-  run.multi(data.trial1=data.trial1, data.trial2=data.trial2, x.names=x.names, 
                       response.type=response.type, causal.names=causal.names, topn=topn)
     out <- res[c("lasso.err.1", "lasso.err.2","uni.err.1", "uni.err.2")]
   }, simplify=F)
