@@ -1,0 +1,93 @@
+---
+title: "Simulate Data"
+output: html_document
+---
+
+# One causal factor
+
+## No shift, same cor, same coef
+
+```{r}
+source("util.R")
+library(dplyr)
+param.list.0 <- list(
+  n.trial = c(400,400,400,800), 
+  n.causal = 1, coef.causal = 1,
+  n.cor.causal = 5, cor.causal = .98,
+  n.noise = 15, outcome.sd = 1.2,
+  shift.mean = 0, shift.sd = .1,
+  n.sim = 100)
+
+param.list <- param.list.0
+
+simu.1 <- sapply(1:param.list$n.sim, function(s){
+  set.seed(s)
+  simu.out <- simu(n.trial =  param.list$n.trial, 
+                 n.causal = param.list$n.causal, n.cor.causal = param.list$n.cor.causal, 
+                 cor.causal = param.list$cor.causal, coef.causal=param.list$coef.causal,
+                 n.noise=param.list$n.noise, outcome.sd=param.list$outcome.sd,
+                 shift.mean = param.list$shift.mean, shift.sd=param.list$shift.sd)
+  
+  }, simplify = F)
+
+```
+
+### Subset so that true causal is not
+
+
+## No shift, different cor, same coef
+
+```{r}
+param.list <- param.list.0
+param.list$cor.causal <- c(.98, .93, .97, .89)
+
+simu.2 <- sapply(1:param.list$n.sim, function(s){
+  set.seed(s)
+  simu.out <- simu(n.trial =  param.list$n.trial, 
+                 n.causal = param.list$n.causal, n.cor.causal = param.list$n.cor.causal, 
+                 cor.causal = param.list$cor.causal, coef.causal=param.list$coef.causal,
+                 n.noise=param.list$n.noise, outcome.sd=param.list$outcome.sd,
+                 shift.mean = param.list$shift.mean, shift.sd=param.list$shift.sd)
+  
+  }, simplify = F)
+
+```
+
+## No shift, same cor, diff coef
+```{r}
+param.list <- param.list.0
+param.list$coef.causal <- c(1, .6, .9, 1.5)
+
+simu.3 <- sapply(1:param.list$n.sim, function(s){
+  set.seed(s)
+  simu.out <- simu(n.trial =  param.list$n.trial, 
+                 n.causal = param.list$n.causal, n.cor.causal = param.list$n.cor.causal, 
+                 cor.causal = param.list$cor.causal, coef.causal=param.list$coef.causal,
+                 n.noise=param.list$n.noise, outcome.sd=param.list$outcome.sd,
+                 shift.mean = param.list$shift.mean, shift.sd=param.list$shift.sd)
+  
+  }, simplify = F)
+
+```
+
+
+## With shift, same cor, same coef
+```{r}
+param.list <- param.list.0
+param.list$shift.mean <- c(1)
+
+simu.4 <- sapply(1:param.list$n.sim, function(s){
+  set.seed(s)
+  simu.out <- simu(n.trial =  param.list$n.trial, 
+                 n.causal = param.list$n.causal, n.cor.causal = param.list$n.cor.causal, 
+                 cor.causal = param.list$cor.causal, coef.causal=param.list$coef.causal,
+                 n.noise=param.list$n.noise, outcome.sd=param.list$outcome.sd,
+                 shift.mean = param.list$shift.mean, shift.sd=param.list$shift.sd)
+  
+  }, simplify = F)
+
+```
+
+```{r}
+save.image("simudata_multistudies.rda")
+```
