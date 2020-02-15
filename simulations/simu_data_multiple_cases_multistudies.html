@@ -327,7 +327,7 @@ library(dplyr)</code></pre>
 <pre class="r"><code>param.list.0 &lt;- list(
   n.trial = c(400,400,400,800), 
   n.causal = 1, coef.causal = 1,
-  n.cor.causal = 5, cor.causal = .98,
+  n.cor.causal = 10, cor.causal = .98,
   n.noise = 15, outcome.sd = 1.2,
   shift.mean = 0, shift.sd = .1,
   n.sim = 100)
@@ -352,7 +352,7 @@ simu.1 &lt;- sapply(1:param.list$n.sim, function(s){
 <div id="no-shift-different-cor-same-coef" class="section level2">
 <h2>No shift, different cor, same coef</h2>
 <pre class="r"><code>param.list &lt;- param.list.0
-param.list$cor.causal &lt;- c(.98, .93, .97, .89)
+param.list$cor.causal &lt;- c(.98, .93, .95, .89)
 
 simu.2 &lt;- sapply(1:param.list$n.sim, function(s){
   set.seed(s)
@@ -367,7 +367,7 @@ simu.2 &lt;- sapply(1:param.list$n.sim, function(s){
 <div id="no-shift-same-cor-diff-coef" class="section level2">
 <h2>No shift, same cor, diff coef</h2>
 <pre class="r"><code>param.list &lt;- param.list.0
-param.list$coef.causal &lt;- c(1, .6, .9, 1.5)
+param.list$coef.causal &lt;- c(1, .5, .9, 1.4)
 
 simu.3 &lt;- sapply(1:param.list$n.sim, function(s){
   set.seed(s)
@@ -382,7 +382,7 @@ simu.3 &lt;- sapply(1:param.list$n.sim, function(s){
 <div id="with-shift-same-cor-same-coef" class="section level2">
 <h2>With shift, same cor, same coef</h2>
 <pre class="r"><code>param.list &lt;- param.list.0
-param.list$shift.mean &lt;- c(1)
+param.list$shift.mean &lt;- c(.3)
 
 simu.4 &lt;- sapply(1:param.list$n.sim, function(s){
   set.seed(s)
