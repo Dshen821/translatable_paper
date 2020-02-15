@@ -66,7 +66,7 @@ for(obs.subset in c( TRUE, FALSE)){
     cat("### MSE \n\n\n")
     mse.plot.df <- readRDS(paste0(simuname.out,".mse.mat.rds"))
     mse.tab <- colMeans(mse.plot.df)#[,-grep("legacy", colnames(mse.plot.df))]) 
-    print(kable(round(mse.tab,3)))
+    #print(kable(round(mse.tab,3)))
     
     mse.tab2 <- matrix(mse.tab, ncol=2)
     rownames(mse.tab2) <- c("ordinal cv testing mse", "loo cv testing mse",

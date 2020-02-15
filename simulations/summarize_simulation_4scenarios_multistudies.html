@@ -460,7 +460,7 @@ $(document).ready(function () {
     cat(&quot;### MSE \n\n\n&quot;)
     mse.plot.df &lt;- readRDS(paste0(simuname.out,&quot;.mse.mat.rds&quot;))
     mse.tab &lt;- colMeans(mse.plot.df)#[,-grep(&quot;legacy&quot;, colnames(mse.plot.df))]) 
-    print(kable(round(mse.tab,3)))
+    #print(kable(round(mse.tab,3)))
     
     mse.tab2 &lt;- matrix(mse.tab, ncol=2)
     rownames(mse.tab2) &lt;- c(&quot;ordinal cv testing mse&quot;, &quot;loo cv testing mse&quot;,
@@ -541,64 +541,6 @@ $(document).ready(function () {
 </div>
 <div id="mse" class="section level3">
 <h3><span class="header-section-number">2.1.2</span> MSE</h3>
-<table>
-<thead>
-<tr class="header">
-<th></th>
-<th align="right">x</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>lasso.mse.te.cv.mean</td>
-<td align="right">1.439</td>
-</tr>
-<tr class="even">
-<td>lasso.mse.te.loo.cv.mean</td>
-<td align="right">1.435</td>
-</tr>
-<tr class="odd">
-<td>lasso.legacy.adj.cv</td>
-<td align="right">1.449</td>
-</tr>
-<tr class="even">
-<td>lasso.legacy.adj.loo.cv</td>
-<td align="right">1.438</td>
-</tr>
-<tr class="odd">
-<td>lasso.mse.future</td>
-<td align="right">1.459</td>
-</tr>
-<tr class="even">
-<td>lasso.mse.legacy</td>
-<td align="right">1.413</td>
-</tr>
-<tr class="odd">
-<td>uni.mse.te.cv.mean</td>
-<td align="right">1.437</td>
-</tr>
-<tr class="even">
-<td>uni.mse.te.loo.cv.mean</td>
-<td align="right">1.433</td>
-</tr>
-<tr class="odd">
-<td>uni.1.legacy.adj.cv</td>
-<td align="right">1.420</td>
-</tr>
-<tr class="even">
-<td>uni.1.legacy.adj.loo.cv</td>
-<td align="right">1.420</td>
-</tr>
-<tr class="odd">
-<td>uni.1.mse.future</td>
-<td align="right">1.464</td>
-</tr>
-<tr class="even">
-<td>uni.1.mse.legacy</td>
-<td align="right">1.420</td>
-</tr>
-</tbody>
-</table>
 <table>
 <thead>
 <tr class="header">
@@ -686,64 +628,6 @@ $(document).ready(function () {
 </div>
 <div id="mse-1" class="section level3">
 <h3><span class="header-section-number">2.2.2</span> MSE</h3>
-<table>
-<thead>
-<tr class="header">
-<th></th>
-<th align="right">x</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>lasso.mse.te.cv.mean</td>
-<td align="right">1.441</td>
-</tr>
-<tr class="even">
-<td>lasso.mse.te.loo.cv.mean</td>
-<td align="right">1.436</td>
-</tr>
-<tr class="odd">
-<td>lasso.legacy.adj.cv</td>
-<td align="right">1.451</td>
-</tr>
-<tr class="even">
-<td>lasso.legacy.adj.loo.cv</td>
-<td align="right">1.439</td>
-</tr>
-<tr class="odd">
-<td>lasso.mse.future</td>
-<td align="right">1.470</td>
-</tr>
-<tr class="even">
-<td>lasso.mse.legacy</td>
-<td align="right">1.412</td>
-</tr>
-<tr class="odd">
-<td>uni.mse.te.cv.mean</td>
-<td align="right">1.435</td>
-</tr>
-<tr class="even">
-<td>uni.mse.te.loo.cv.mean</td>
-<td align="right">1.433</td>
-</tr>
-<tr class="odd">
-<td>uni.1.legacy.adj.cv</td>
-<td align="right">1.422</td>
-</tr>
-<tr class="even">
-<td>uni.1.legacy.adj.loo.cv</td>
-<td align="right">1.422</td>
-</tr>
-<tr class="odd">
-<td>uni.1.mse.future</td>
-<td align="right">1.457</td>
-</tr>
-<tr class="even">
-<td>uni.1.mse.legacy</td>
-<td align="right">1.422</td>
-</tr>
-</tbody>
-</table>
 <table>
 <thead>
 <tr class="header">
@@ -855,64 +739,6 @@ $(document).ready(function () {
 <thead>
 <tr class="header">
 <th></th>
-<th align="right">x</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>lasso.mse.te.cv.mean</td>
-<td align="right">1.485</td>
-</tr>
-<tr class="even">
-<td>lasso.mse.te.loo.cv.mean</td>
-<td align="right">1.537</td>
-</tr>
-<tr class="odd">
-<td>lasso.legacy.adj.cv</td>
-<td align="right">1.495</td>
-</tr>
-<tr class="even">
-<td>lasso.legacy.adj.loo.cv</td>
-<td align="right">1.551</td>
-</tr>
-<tr class="odd">
-<td>lasso.mse.future</td>
-<td align="right">1.851</td>
-</tr>
-<tr class="even">
-<td>lasso.mse.legacy</td>
-<td align="right">1.458</td>
-</tr>
-<tr class="odd">
-<td>uni.mse.te.cv.mean</td>
-<td align="right">1.481</td>
-</tr>
-<tr class="even">
-<td>uni.mse.te.loo.cv.mean</td>
-<td align="right">1.534</td>
-</tr>
-<tr class="odd">
-<td>uni.1.legacy.adj.cv</td>
-<td align="right">1.464</td>
-</tr>
-<tr class="even">
-<td>uni.1.legacy.adj.loo.cv</td>
-<td align="right">1.464</td>
-</tr>
-<tr class="odd">
-<td>uni.1.mse.future</td>
-<td align="right">1.800</td>
-</tr>
-<tr class="even">
-<td>uni.1.mse.legacy</td>
-<td align="right">1.464</td>
-</tr>
-</tbody>
-</table>
-<table>
-<thead>
-<tr class="header">
-<th></th>
 <th align="right">ordinal cv testing mse</th>
 <th align="right">loo cv testing mse</th>
 <th align="right">ordinal cv adjusted mse</th>
@@ -996,64 +822,6 @@ $(document).ready(function () {
 </div>
 <div id="mse-3" class="section level3">
 <h3><span class="header-section-number">2.4.2</span> MSE</h3>
-<table>
-<thead>
-<tr class="header">
-<th></th>
-<th align="right">x</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>lasso.mse.te.cv.mean</td>
-<td align="right">1.464</td>
-</tr>
-<tr class="even">
-<td>lasso.mse.te.loo.cv.mean</td>
-<td align="right">1.458</td>
-</tr>
-<tr class="odd">
-<td>lasso.legacy.adj.cv</td>
-<td align="right">1.478</td>
-</tr>
-<tr class="even">
-<td>lasso.legacy.adj.loo.cv</td>
-<td align="right">1.462</td>
-</tr>
-<tr class="odd">
-<td>lasso.mse.future</td>
-<td align="right">1.417</td>
-</tr>
-<tr class="even">
-<td>lasso.mse.legacy</td>
-<td align="right">1.436</td>
-</tr>
-<tr class="odd">
-<td>uni.mse.te.cv.mean</td>
-<td align="right">1.459</td>
-</tr>
-<tr class="even">
-<td>uni.mse.te.loo.cv.mean</td>
-<td align="right">1.450</td>
-</tr>
-<tr class="odd">
-<td>uni.1.legacy.adj.cv</td>
-<td align="right">1.438</td>
-</tr>
-<tr class="even">
-<td>uni.1.legacy.adj.loo.cv</td>
-<td align="right">1.438</td>
-</tr>
-<tr class="odd">
-<td>uni.1.mse.future</td>
-<td align="right">1.414</td>
-</tr>
-<tr class="even">
-<td>uni.1.mse.legacy</td>
-<td align="right">1.438</td>
-</tr>
-</tbody>
-</table>
 <table>
 <thead>
 <tr class="header">
@@ -1160,64 +928,6 @@ $(document).ready(function () {
 </div>
 <div id="mse-4" class="section level3">
 <h3><span class="header-section-number">3.1.2</span> MSE</h3>
-<table>
-<thead>
-<tr class="header">
-<th></th>
-<th align="right">x</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>lasso.mse.te.cv.mean</td>
-<td align="right">1.439</td>
-</tr>
-<tr class="even">
-<td>lasso.mse.te.loo.cv.mean</td>
-<td align="right">1.437</td>
-</tr>
-<tr class="odd">
-<td>lasso.legacy.adj.cv</td>
-<td align="right">1.449</td>
-</tr>
-<tr class="even">
-<td>lasso.legacy.adj.loo.cv</td>
-<td align="right">1.440</td>
-</tr>
-<tr class="odd">
-<td>lasso.mse.future</td>
-<td align="right">1.461</td>
-</tr>
-<tr class="even">
-<td>lasso.mse.legacy</td>
-<td align="right">1.413</td>
-</tr>
-<tr class="odd">
-<td>uni.mse.te.cv.mean</td>
-<td align="right">1.445</td>
-</tr>
-<tr class="even">
-<td>uni.mse.te.loo.cv.mean</td>
-<td align="right">1.443</td>
-</tr>
-<tr class="odd">
-<td>uni.1.legacy.adj.cv</td>
-<td align="right">1.426</td>
-</tr>
-<tr class="even">
-<td>uni.1.legacy.adj.loo.cv</td>
-<td align="right">1.426</td>
-</tr>
-<tr class="odd">
-<td>uni.1.mse.future</td>
-<td align="right">1.476</td>
-</tr>
-<tr class="even">
-<td>uni.1.mse.legacy</td>
-<td align="right">1.426</td>
-</tr>
-</tbody>
-</table>
 <table>
 <thead>
 <tr class="header">
@@ -1337,64 +1047,6 @@ $(document).ready(function () {
 <thead>
 <tr class="header">
 <th></th>
-<th align="right">x</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>lasso.mse.te.cv.mean</td>
-<td align="right">1.444</td>
-</tr>
-<tr class="even">
-<td>lasso.mse.te.loo.cv.mean</td>
-<td align="right">1.440</td>
-</tr>
-<tr class="odd">
-<td>lasso.legacy.adj.cv</td>
-<td align="right">1.455</td>
-</tr>
-<tr class="even">
-<td>lasso.legacy.adj.loo.cv</td>
-<td align="right">1.444</td>
-</tr>
-<tr class="odd">
-<td>lasso.mse.future</td>
-<td align="right">1.483</td>
-</tr>
-<tr class="even">
-<td>lasso.mse.legacy</td>
-<td align="right">1.414</td>
-</tr>
-<tr class="odd">
-<td>uni.mse.te.cv.mean</td>
-<td align="right">1.472</td>
-</tr>
-<tr class="even">
-<td>uni.mse.te.loo.cv.mean</td>
-<td align="right">1.471</td>
-</tr>
-<tr class="odd">
-<td>uni.1.legacy.adj.cv</td>
-<td align="right">1.445</td>
-</tr>
-<tr class="even">
-<td>uni.1.legacy.adj.loo.cv</td>
-<td align="right">1.445</td>
-</tr>
-<tr class="odd">
-<td>uni.1.mse.future</td>
-<td align="right">1.575</td>
-</tr>
-<tr class="even">
-<td>uni.1.mse.legacy</td>
-<td align="right">1.445</td>
-</tr>
-</tbody>
-</table>
-<table>
-<thead>
-<tr class="header">
-<th></th>
 <th align="right">ordinal cv testing mse</th>
 <th align="right">loo cv testing mse</th>
 <th align="right">ordinal cv adjusted mse</th>
@@ -1498,64 +1150,6 @@ $(document).ready(function () {
 </div>
 <div id="mse-6" class="section level3">
 <h3><span class="header-section-number">3.3.2</span> MSE</h3>
-<table>
-<thead>
-<tr class="header">
-<th></th>
-<th align="right">x</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>lasso.mse.te.cv.mean</td>
-<td align="right">1.485</td>
-</tr>
-<tr class="even">
-<td>lasso.mse.te.loo.cv.mean</td>
-<td align="right">1.537</td>
-</tr>
-<tr class="odd">
-<td>lasso.legacy.adj.cv</td>
-<td align="right">1.495</td>
-</tr>
-<tr class="even">
-<td>lasso.legacy.adj.loo.cv</td>
-<td align="right">1.551</td>
-</tr>
-<tr class="odd">
-<td>lasso.mse.future</td>
-<td align="right">1.852</td>
-</tr>
-<tr class="even">
-<td>lasso.mse.legacy</td>
-<td align="right">1.459</td>
-</tr>
-<tr class="odd">
-<td>uni.mse.te.cv.mean</td>
-<td align="right">1.484</td>
-</tr>
-<tr class="even">
-<td>uni.mse.te.loo.cv.mean</td>
-<td align="right">1.538</td>
-</tr>
-<tr class="odd">
-<td>uni.1.legacy.adj.cv</td>
-<td align="right">1.467</td>
-</tr>
-<tr class="even">
-<td>uni.1.legacy.adj.loo.cv</td>
-<td align="right">1.467</td>
-</tr>
-<tr class="odd">
-<td>uni.1.mse.future</td>
-<td align="right">1.817</td>
-</tr>
-<tr class="even">
-<td>uni.1.mse.legacy</td>
-<td align="right">1.467</td>
-</tr>
-</tbody>
-</table>
 <table>
 <thead>
 <tr class="header">
@@ -1671,64 +1265,6 @@ $(document).ready(function () {
 </div>
 <div id="mse-7" class="section level3">
 <h3><span class="header-section-number">3.4.2</span> MSE</h3>
-<table>
-<thead>
-<tr class="header">
-<th></th>
-<th align="right">x</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>lasso.mse.te.cv.mean</td>
-<td align="right">1.466</td>
-</tr>
-<tr class="even">
-<td>lasso.mse.te.loo.cv.mean</td>
-<td align="right">1.460</td>
-</tr>
-<tr class="odd">
-<td>lasso.legacy.adj.cv</td>
-<td align="right">1.481</td>
-</tr>
-<tr class="even">
-<td>lasso.legacy.adj.loo.cv</td>
-<td align="right">1.466</td>
-</tr>
-<tr class="odd">
-<td>lasso.mse.future</td>
-<td align="right">1.419</td>
-</tr>
-<tr class="even">
-<td>lasso.mse.legacy</td>
-<td align="right">1.436</td>
-</tr>
-<tr class="odd">
-<td>uni.mse.te.cv.mean</td>
-<td align="right">1.472</td>
-</tr>
-<tr class="even">
-<td>uni.mse.te.loo.cv.mean</td>
-<td align="right">1.466</td>
-</tr>
-<tr class="odd">
-<td>uni.1.legacy.adj.cv</td>
-<td align="right">1.446</td>
-</tr>
-<tr class="even">
-<td>uni.1.legacy.adj.loo.cv</td>
-<td align="right">1.446</td>
-</tr>
-<tr class="odd">
-<td>uni.1.mse.future</td>
-<td align="right">1.432</td>
-</tr>
-<tr class="even">
-<td>uni.1.mse.legacy</td>
-<td align="right">1.446</td>
-</tr>
-</tbody>
-</table>
 <table>
 <thead>
 <tr class="header">
