@@ -8,8 +8,10 @@ output: html_document
 ## No shift, same cor, same coef
 
 ```{r}
-source("util.R")
+source("/home/bceuser/shend9/TranslatableForked/simulations/util.R")
 library(dplyr)
+
+#list of meta
 param.list.0 <- list(
   n.trial = c(400,400,400,800), 
   n.causal = 1, coef.causal = 1,
@@ -20,16 +22,40 @@ param.list.0 <- list(
 
 param.list <- param.list.0
 
+#param.list
+                # 1:simulations
 simu.1 <- sapply(1:param.list$n.sim, function(s){
   set.seed(s)
   simu.out <- simu(n.trial =  param.list$n.trial, 
-                 n.causal = param.list$n.causal, n.cor.causal = param.list$n.cor.causal, 
-                 cor.causal = param.list$cor.causal, coef.causal=param.list$coef.causal,
-                 n.noise=param.list$n.noise, outcome.sd=param.list$outcome.sd,
-                 shift.mean = param.list$shift.mean, shift.sd=param.list$shift.sd)
+                   n.causal = param.list$n.causal, n.cor.causal = param.list$n.cor.causal, 
+                   cor.causal = param.list$cor.causal, coef.causal=param.list$coef.causal,
+                   n.noise=param.list$n.noise, outcome.sd=param.list$outcome.sd,
+                   shift.mean = param.list$shift.mean, shift.sd=param.list$shift.sd)
   
   }, simplify = F)
 
+simu.1[[1]]$x.names
+
+simu.1[[1]]$data
+# a.feats <- simu.1[[1]][[1]][, names(simu.1[[1]][[1]])[grepl("a\\.",names(simu.1[[1]][[1]]))]]
+# cor(a.feats)
+#simu.1[[1]] # 28 x 2000
+# List of 100 Lists of 3: data, x.names(a.0,....a.9, noise.0, ... noise.14), causal.names
+
+#names(simu.1[[1]][[1]])
+#col names
+# 1 causal
+# 10 corr causal
+# 15 noise
+# 1 outcome
+# trial
+# 
+# res <-  simu(n.trial =  param.list$n.trial, 
+#                    n.causal = param.list$n.causal, n.cor.causal = param.list$n.cor.causal, 
+#                    cor.causal = param.list$cor.causal, coef.causal=param.list$coef.causal,
+#                    n.noise=param.list$n.noise, outcome.sd=param.list$outcome.sd,
+#                    shift.mean = param.list$shift.mean, shift.sd=param.list$shift.sd)
+  
 ```
 
 ### Subset so that true causal is not
@@ -56,7 +82,7 @@ simu.2 <- sapply(1:param.list$n.sim, function(s){
 ## No shift, same cor, diff coef
 ```{r}
 param.list <- param.list.0
-param.list$coef.causal <- c(1, .5, .9, 1.4)
+param.list$coef.causal <- c(1, .5, .9, 1.4) #specify different coefficients
 
 simu.3 <- sapply(1:param.list$n.sim, function(s){
   set.seed(s)
@@ -67,6 +93,8 @@ simu.3 <- sapply(1:param.list$n.sim, function(s){
                  shift.mean = param.list$shift.mean, shift.sd=param.list$shift.sd)
   
   }, simplify = F)
+
+simu.3[[1]]
 
 ```
 
@@ -85,6 +113,8 @@ simu.4 <- sapply(1:param.list$n.sim, function(s){
                  shift.mean = param.list$shift.mean, shift.sd=param.list$shift.sd)
   
   }, simplify = F)
+
+simu.4[[1]]
 
 ```
 

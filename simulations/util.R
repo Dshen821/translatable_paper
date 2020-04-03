@@ -27,66 +27,84 @@ simu <- function(n.trial,
                  n.noise=50, outcome.sd=.1,
                  shift.mean = c(0, 0), shift.sd=c(.1, .1)) {
   
-  nsamples <- sum(n.trial)
-  nt <- length(n.trial)
-  coef.causal <- matrix(coef.causal, nrow=n.causal)
+  nsamples <- sum(n.trial) # total patient= samples trial1 + samples trial 2 + ... + trial n
+  nt <- length(n.trial) # number of trials
+  coef.causal <- matrix(coef.causal, nrow=n.causal) # coefficients specified must match number specified
   cor.causal <- matrix(cor.causal, nrow=n.causal)
   if(n.causal>0)stopifnot(n.causal == length(n.cor.causal)) else stopifnot(is.null(n.cor.causal))
-  stopifnot(n.causal+n.noise>0)
+  stopifnot(n.causal+n.noise>0) # independent features + noise features > 0
   
   
-  # simulate causal features and noise feactures
+  # BASIC DATA: simulate causal features and noise feactures
   names.no.cor <- causal.names <- NULL
   if(n.causal>0) {
-    causal.names <- paste0(letters[1:n.causal],".0")
+    causal.names <- paste0(letters[1:n.causal],".0") # create name of causal features: a0, b0, ... ,
     names.no.cor <- c(names.no.cor, causal.names) # causal are a.0, b.0...
   }
+
+  # CREATE NOISE
   if(n.noise>0) names.no.cor <- c(names.no.cor, paste0("noise.",1:n.noise-1)) # noises are noise.0, noise.1, ....
-  x.no.cor <- sapply(1: (n.causal+n.noise), function(i)rnorm(nsamples))
+  x.no.cor <- sapply(1: (n.causal+n.noise), function(i)rnorm(nsamples)) # creates nsamples x n.causal + n.noise rnormals
   colnames(x.no.cor) <- names.no.cor
   x.no.cor <- as.data.frame(x.no.cor)
+  
+  # labels trial1, trial1,...,trial2, trial2,...trial3,trialnt, according to index count in n.trial[i]
   x.no.cor <- x.no.cor %>% 
-    mutate(trial = unlist(sapply(1:nt, function(i)rep(paste0("trial",i), n.trial[i]))))
+    mutate(trial = unlist(sapply(1:nt, function(i)rep(paste0("trial",i), n.trial[i])))) # col for trial#
   
   
-  # population shift
-  if(unique(shift.mean)!=0){
+  # SCENARIO 1:  population shift
+  # for each a0, a1,.... causal effect, within n.trials we randomly shift it by none, shift, 2shift, ...
+  if(unique(shift.mean)!=0){ #when shift.mean is not all 0's
     for (fe in 1:n.causal){
       if(shift.mean[fe]>0){
         x.var <- paste0(letters[fe],".0")
         random.index <- sample(0:(nt-1), nt) # randomly asisgn n.trial trials to mean, mean+shift, mean+2shift, ... 
+        
         for(i in 1:nt){
           x.no.cor[which(x.no.cor$trial==paste0('trial',i)), x.var] <- x.no.cor[which(x.no.cor$trial==paste0('trial',i)), x.var] + 
-            rnorm(n.trial[i] ,shift.mean[fe]*random.index[i], shift.sd[fe])
+            rnorm(n.trial[i], shift.mean[fe]*random.index[i], shift.sd[fe])
+            # rnorm(number in trial, shift.mean amount * random index (0,1,2,3), shift.sd)
         }
       }
       }
   }
   
-  # Simulate correlated features: allow different correlation matrix in trial 1 and 2
+  #  SCENARIO 2: Simulate correlated features: allow different correlation matrix in trial 1 and 2
   
+  ## Creates a.1,....,a.10 correlated features to a.0 and binds them to x.no.cor
   x <- x.no.cor
   if(n.causal>0){
     for (fe in 1:n.causal){
       if(n.cor.causal[fe]>0){
         prefix <- letters[fe]
         cor.causal.use <- cor.causal[fe, ] # cor to use for each causal feature
-        if(ncol(cor.causal)!=1)cor.v <- unlist(sapply(1:nt, function(i)rep(cor.causal.use[i], n.trial[i])))
-        else cor.v <- rep(cor.causal.use, sum(n.trial))
+        if(ncol(cor.causal)!=1)cor.v <- unlist(sapply(1:nt, function(i)rep(cor.causal.use[i], n.trial[i]))) # different cor c(0.98, 0.75) per trial1, trial2,..
+        else cor.v <- rep(cor.causal.use, sum(n.trial)) # specify same cor for each obs
+        
         # cor for each patient (all pts have same cor structure, or each trial has diff cor structure)
+        # takes x.no.cor value of a.0, b.0,...  *sqrt(cor.v) + rnorm(nsamples ) * sqrt(1-cor.v) -- what eq is this ?
         x.cor.tmp <- sapply(1:n.cor.causal[fe], function(i) x.no.cor[, paste0(prefix,".0")] * sqrt(cor.v) + rnorm(nsamples) * sqrt(1-cor.v))
         colnames(x.cor.tmp) <- paste0(prefix, ".", 1:ncol(x.cor.tmp))
+        
         x <- cbind(x, data.frame(x.cor.tmp))
+        
+        #x now has "a.1" "a.2"      "a.3"      "a.4"      "a.5"      "a.6"      "a.7"      "a.8"      "a.9"      "a.10" 
+        
       }
     }
     
   }
-  
-  
+
   
   # Simulate outcome
+  # nothing causal, so outcome is just rnorm vars
   if(n.causal==0) x$outcome <- rnorm(nsamples)
   
+  
+  # for each trial, take x[trialn, c(a.0, b.0,...)] * coef of (a.0, b.0,..), transpose and row sum
+  # add rnorm(length of trialn, 0, outcome.sd) and add as noise 
+  # gives outcome
   if(n.causal>0){ 
     x$outcome <- NULL
     for(i in 1:nt){
@@ -94,82 +112,60 @@ simu <- function(n.trial,
     tmp <-which(x$trial==paste0("trial",i))
     x$outcome[tmp] <- colSums(t(x[tmp, causal.names]) * coef.use) + 
       rnorm(length(tmp), 0, outcome.sd)
+
   }
   }
   
+  # order cols, label rows
   x <- x[order(names(x))]
   rownames(x) <- paste0('s.', 1:nrow(x))
-  x.names <- setdiff(names(x), c("outcome","trial"))
-  
+  x.names <- setdiff(names(x), c("outcome","trial")) # appears in x, and not called outcome, trial
   out <- list(data = x, x.names=x.names, causal.names=causal.names)
 }
 
-#' heatmap for visualization
 
-heat.fun <- function(simu.out){
-  data.tmp <- simu.out$data 
-  tmp <- data.tmp %>% select(outcome, trial)
-  pheatmap(t(data.tmp[,simu.out$x.names]),
-           cluster_cols=F, cluster_rows = F,
-           annotation_row = NA,
-           annotation_col=tmp)
-  
-}
-
-#' summarize empirical correlation estimates and shifts from simulated data
-summary.cor <- function(simu.out){
-  x.names <- simu.out$x.names[which(substr(simu.out$x.names,1,2)=="a.")]
-  xcor.list <- sapply(unique(data$trial), function(i)
-    cor(simu.out$data %>% filter(trial==i) %>% select(!!x.names, outcome)))
-  x.shift <- simu.out$data %>% group_by(trial) %>% summarize(a0_mean=mean(a.0))
-  model.list <- sapply(unique(data$trial), function(i) 
-    coef(summary(lm(outcome~a.0, data=simu.out$data %>% filter(trial==i)))))
-  out <- list(xcor.list=xcor.list, x.shift=x.shift,
-              model.list=model.list)
-}
-
-#' lasso wrapper
+#' LASSO wrapper
 run.lasso <- function(x,y, alpha=1,top=NULL, family="binomial", ...){
-  nona <- which(!is.na(rowMeans(x)))
+  # filter out any rows of x that have missing
+  nona <- which(!is.na(rowMeans(x))) # indexes non missing rows
+  # CV determines best lambda for lasso
   lasso.cv<- cv.glmnet(x=x[nona,], y=y[nona],alpha=alpha,family=family,...)
-  lasso.pen <- lasso.cv$lambda.min #optimal lambda
-  #lasso.pen #minimal shrinkage
+  lasso.pen <- lasso.cv$lambda.min #optimal lambda; lasso.pen #minimal shrinkage
+  
+  #fit lasso lm based on best lambda
   lasso.fit <-glmnet(x = x[nona,], y=y[nona],alpha=alpha,family=family,lambda = lasso.pen,...) #estimate the
   lasso.coef <- as.vector(data.matrix(coef(lasso.fit)))
   names(lasso.coef) <- coef(lasso.fit)@Dimnames[[1]]
-  lasso.coef <- lasso.coef[-1]
+  lasso.coef <- lasso.coef[-1]# drop intercpt
+  # Sort lasso coefficeints by magnitude
   lasso.coef.od <- order(abs(lasso.coef),decreasing=T)
   lasso.coef.sort <- lasso.coef[lasso.coef.od]
+  
+  # Return nonzeros (all or top # specified)
   if(!is.null(top))nznames <- lasso.coef.sort[which(lasso.coef.sort!=0)][1:min(top, sum(lasso.coef.sort!=0))] else nznames <- lasso.coef.sort[which(lasso.coef.sort!=0)]
-  out <- list(fit=lasso.fit, nonzero.names = nznames)
+  
+  out <- list(fit=lasso.fit, nonzero.names = nznames) # lassofit and non zero coefs
+  return(out)
 }
 
 
-#' run uni variate screening using lm
-#' not used for now  - run.glm.uni can cover this functionality
-run.gaussian.uni <- function(x, y){
-  vals <- sapply(colnames(x), function(i)coef(summary(lm(y~x[,i])))[2,c("Estimate","Pr(>|t|)")])
-  vals.sort <- vals[,order(vals["Pr(>|t|)",])]
-  vals.sort
-}
-
-
-#' run uni variate screening
+#' run uni-variate screening
 run.glm.uni <- function(x, y, family="binomial", save.model=FALSE){
-  if(!save.model){
+  if(!save.model){ # singly regress y on each x, storing estimate and pval (row1 and row2) by cols (covariates)
     vals <- sapply(colnames(x), function(i)coef(summary(glm(y~x[,i], family=family)))[2,c("Estimate","Pr(>|t|)")])
-    vals.sort <- vals[,order(vals["Pr(>|t|)",])]
-    out <- vals.sort
+    vals.sort <- vals[,order(vals["Pr(>|t|)",])] # smallest to largest based on pval (increasing)
+    out <- vals.sort # just p value small to alrge
   }
   if(save.model){
     mod <- sapply(colnames(x), function(i){
-      tmp <- data.frame(y0 = y, x0= x[,i]) 
-      glm(y0 ~ x0, data=tmp, family=family)}
+      tmp <- data.frame(y0 = y, x0= x[,i]) # y, x[,i] data frame
+      glm(y0 ~ x0, data=tmp, family=family)} # stores all model fits in list
       , simplify = F)
+    # Store estimate and pval, ordering from smallest p val to greatest
     vals <- data.matrix(sapply(mod, function(i)coef(summary(i))[2,c("Estimate","Pr(>|t|)")]))
     vals.sort <- vals[,order(vals["Pr(>|t|)",])]
-    pred <- data.matrix(sapply(mod, function(i)predict(i)))
-    out <- list(model=mod, vals.sort=vals.sort, pred=pred)
+    pred <- data.matrix(sapply(mod, function(i)predict(i))) # use each model to predit on y
+    out <- list(model=mod, vals.sort=vals.sort, pred=pred) # return model, pvals, prediciton
   }
   out
 }
@@ -240,4 +236,38 @@ boot.cv <-  function(x, x.names, response.type, causal.names, topn = 5, n.rep = 
   }, simplify=F)
   
   
+}
+
+
+
+#' heatmap for visualization
+heat.fun <- function(simu.out){
+  data.tmp <- simu.out$data 
+  tmp <- data.tmp %>% select(outcome, trial)
+  pheatmap(t(data.tmp[,simu.out$x.names]),
+           cluster_cols=F, cluster_rows = F,
+           annotation_row = NA,
+           annotation_col=tmp)
+  
+}
+
+#' summarize empirical correlation estimates and shifts from simulated data
+summary.cor <- function(simu.out){
+  x.names <- simu.out$x.names[which(substr(simu.out$x.names,1,2)=="a.")]
+  xcor.list <- sapply(unique(data$trial), function(i)
+    cor(simu.out$data %>% filter(trial==i) %>% select(!!x.names, outcome)))
+  x.shift <- simu.out$data %>% group_by(trial) %>% summarize(a0_mean=mean(a.0))
+  model.list <- sapply(unique(data$trial), function(i) 
+    coef(summary(lm(outcome~a.0, data=simu.out$data %>% filter(trial==i)))))
+  out <- list(xcor.list=xcor.list, x.shift=x.shift,
+              model.list=model.list)
+}
+
+
+#' run uni variate screening using lm
+#' NOT USED FOR NOW  - run.glm.uni can cover this functionality
+run.gaussian.uni <- function(x, y){
+  vals <- sapply(colnames(x), function(i)coef(summary(lm(y~x[,i])))[2,c("Estimate","Pr(>|t|)")])
+  vals.sort <- vals[,order(vals["Pr(>|t|)",])]
+  vals.sort
 }

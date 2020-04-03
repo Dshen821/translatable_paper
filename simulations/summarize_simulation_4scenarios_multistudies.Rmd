@@ -30,7 +30,7 @@ library(knitr)
 library(glmnet)
 library(pheatmap)
 library(knitr)
-source("util.R")
+source("/home/bceuser/shend9/TranslatableForked/simulations/util.R")
 set.seed(10)
 
 section.names <- c("No shift, same cor, same coef", "No shift, different cor, same coef", "No shift, same cor, diff coef", "With shift, same cor, same coef")
@@ -52,8 +52,8 @@ for(obs.subset in c( TRUE, FALSE)){
   cat(paste0("## Simu ", i, ":", section.names[i],"\n\n\n"))
   
     suffix <- ifelse(obs.subset,"","noa0")
-    simuname.out <- paste0("out/simu_multistudies.",i, suffix)
-    cat(paste0("Causal feacture observed? ", obs.subset, '\n\n\n'))
+    simuname.out <- paste0("/home/bceuser/shend9/TranslatableForked/simulations/out/simu_multistudies.",i, suffix)
+    cat(paste0("Causal feature observed? ", obs.subset, '\n\n\n'))
 
     cat("### Top selected features \n\n\n")
     res.v <- readRDS(paste0(simuname.out, ".res.v.rds"))

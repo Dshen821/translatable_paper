@@ -1,15 +1,15 @@
 # Analysis wrapper
-
-
 library(pensim)
 library(tidyverse)
 library(knitr)
 library(glmnet)
 library(pheatmap)
-source("util.R")
+
+source(file = "/home/bceuser/shend9/TranslatableForked/simulations/util.R")
+setwd("/home/bceuser/shend9/TranslatableForked/simulations")
 set.seed(10)
 
-#simuname <- "simu1"
+#simuname <- "simu.1"
 
 simudata <- get(simuname)
 
@@ -37,7 +37,6 @@ cv.out <-  sapply(1:n.sim, function(s) {
 }, simplify=F)
 
 
-
 # testing mse per cv
 lasso.mse.te.cv<- sapply(cv.out, function(j)sapply(j, function(i)mean((i$lasso.err.2)^2) )) #MSE in each data set in each CV testing
 uni.mse.te.cv <- sapply(cv.out, function(j)sapply(j, function(i)mean((i$uni.err.2[,1])^2)))
@@ -47,7 +46,7 @@ lasso.mse.te.cv.mean <- apply(lasso.mse.te.cv,2,mean) # testing MSE in each data
 uni.mse.te.cv.mean <- apply(uni.mse.te.cv, 2, mean)
 
 
-
+# Bias/optimism
 # testing mse - training mse, per cv
 lasso.diff.te.cv<- sapply(cv.out, function(j)sapply(j, function(i)mean(i$lasso.err.2^2) -mean(i$lasso.err.1^2)))  # in each data set in each CV testing
 uni.diff.te.cv <- sapply(cv.out, function(j)sapply(j, function(i)mean(i$uni.err.2[,1]^2) - mean(i$uni.err.2[,1]^2)))
@@ -71,12 +70,14 @@ loo.cv.out <-  sapply(1:n.sim, function(s) {
   }
   tmpdata <- simu.out$data%>% filter(trial != test.trial.name)
   boot.cv(x=tmpdata, x.names=x.names,
-        response.type = response.type, causal.names = causal.names, 
-        topn = 5, n.rep = n.rep, replace = FALSE,
-        name.mat = sapply(unique(tmpdata$trial), 
-                          function(i)which(tmpdata$trial!=i) , 
+          response.type = response.type, causal.names = causal.names,
+          topn = 5, n.rep = n.rep, replace = FALSE,
+        name.mat = sapply(unique(tmpdata$trial),              ########## extra in LOOCV
+                          function(i)which(tmpdata$trial!=i) ,  ########
                           simplify = F))
 }, simplify=F)
+
+
 
 # testing mse per cv
 lasso.mse.te.loo.cv<- sapply(loo.cv.out, function(j)sapply(j, function(i)mean((i$lasso.err.2)^2) )) #MSE in each data set in each CV testing
@@ -141,6 +142,7 @@ mse.mat <- cbind(lasso.mse.te.cv.mean, lasso.mse.te.loo.cv.mean, lasso.legacy.ad
                  lasso.mse.future, lasso.mse.legacy, 
                  uni.mse.te.cv.mean, uni.mse.te.loo.cv.mean, uni.1.legacy.adj.cv, uni.1.legacy.adj.loo.cv
                  ,uni.1.mse.future, uni.1.mse.legacy)
+
 
 
 saveRDS(mse.mat, file=paste0(simuname.out, ".mse.mat.rds"))
