@@ -1,0 +1,116 @@
+---
+title: "Simulate Data"
+output: html_document
+---
+
+```{r}
+
+# This file SOURCES util functions and creates 4 types of simulation data 
+
+source("/Users/u107586/translatable_paper/simulations/R/util.R")
+library(pensim)
+library(tidyverse)
+library(knitr)
+library(glmnet)
+library(pheatmap)
+library(doParallel)
+
+#list of meta
+param.list.0 <- list(
+  n.trial = c(400,400,400,800), 
+  n.causal = 1, coef.causal = 1,
+  n.cor.causal = 10, cor.causal = .98,
+  n.noise = 15, outcome.sd = 1.2,
+  shift.mean = 0, shift.sd = .1,
+  n.sim = 100)
+
+param.list <- param.list.0
+
+```
+
+
+```{r}
+# Set-up Cores, Backend
+no_cores <- detectCores() - 1            
+cl <- makeCluster(no_cores, type="FORK")
+registerDoParallel(cl)
+```
+
+# One causal factor
+
+## 1) No shift, same cor, same coef
+
+```{r}
+
+# 1) One causal factor
+## No shift, same cor, same coef
+simu.1 <- parSapply(cl, 1:param.list$n.sim, function(s){
+  set.seed(s)
+  simu.out <- simu(n.trial =  param.list$n.trial, 
+                   n.causal = param.list$n.causal, n.cor.causal = param.list$n.cor.causal, 
+                   cor.causal = param.list$cor.causal, coef.causal=param.list$coef.causal,
+                   n.noise=param.list$n.noise, outcome.sd=param.list$outcome.sd,
+                   shift.mean = param.list$shift.mean, shift.sd=param.list$shift.sd)
+  
+}, simplify = F)
+```
+
+
+### 2) Subset so that true causal is not
+
+## No shift, different cor, same coef
+
+```{r}
+param.list <- param.list.0
+param.list$cor.causal <- c(.98, .93, .95, .89)
+
+simu.2 <- parSapply(cl, 1:param.list$n.sim, function(s){
+  set.seed(s)
+  simu.out <- simu(n.trial =  param.list$n.trial, 
+                   n.causal = param.list$n.causal, n.cor.causal = param.list$n.cor.causal, 
+                   cor.causal = param.list$cor.causal, coef.causal=param.list$coef.causal,
+                   n.noise=param.list$n.noise, outcome.sd=param.list$outcome.sd,
+                   shift.mean = param.list$shift.mean, shift.sd=param.list$shift.sd)
+  
+}, simplify = F)
+```
+
+## 3) No shift, same cor, diff coef
+```{r}
+param.list <- param.list.0
+param.list$coef.causal <- c(1, .5, .9, 1.4) #specify different coefficients
+
+simu.3 <- parSapply(cl, 1:param.list$n.sim, function(s){
+  set.seed(s)
+  simu.out <- simu(n.trial =  param.list$n.trial, 
+                   n.causal = param.list$n.causal, n.cor.causal = param.list$n.cor.causal, 
+                   cor.causal = param.list$cor.causal, coef.causal=param.list$coef.causal,
+                   n.noise=param.list$n.noise, outcome.sd=param.list$outcome.sd,
+                   shift.mean = param.list$shift.mean, shift.sd=param.list$shift.sd)
+}, simplify = F)
+```
+
+## 4) With shift, same cor, same coef
+
+```{r}
+param.list <- param.list.0
+param.list$shift.mean <- c(.3)
+
+simu.4 <- parSapply(cl, 1:param.list$n.sim, function(s){
+  set.seed(s)
+  simu.out <- simu(n.trial =  param.list$n.trial, 
+                   n.causal = param.list$n.causal, n.cor.causal = param.list$n.cor.causal, 
+                   cor.causal = param.list$cor.causal, coef.causal=param.list$coef.causal,
+                   n.noise=param.list$n.noise, outcome.sd=param.list$outcome.sd,
+                   shift.mean = param.list$shift.mean, shift.sd=param.list$shift.sd)
+}, simplify = F)
+```
+
+
+## Save rda 
+```{r}
+# Close connection, save rda data
+stopCluster(cl)
+save.image("simudata_multistudies.rda")
+```
+
